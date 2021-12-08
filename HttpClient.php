@@ -27,11 +27,8 @@ class HttpClient
             $body .= "Accept: */*\r\n";
             $body .= "\r\n";
 
-            #echo "HttpClient::fetch Fiber write\n";
             \Async::async($this->write($socket, $body));
-            #echo "HttpClient::fetch Fiber write readAllData\n";
             return \Async::async($this->read($socket,));
-            #echo "HttpClient::fetch Fiber write readAllData after\n";
         });
     }
 
@@ -56,36 +53,26 @@ class HttpClient
 
     private function read(mixed $socket): \Fiber
     {
-        #echo "AsyncSocket::readAllData\n";
         return new \Fiber(function () use ($socket) {
-            #echo "AsyncSocket::readAllData Fiber\n";
             $buffer = "";
 
             do {
-                #echo "AsyncSocket::readAllData Fiber stream_select\n";
                 $needCheck = $this->checkStream($socket, STREAM_CHECK_READ);
-                #echo "AsyncSocket::readAllData Fiber stream_select after\n";
                 if ($needCheck === 1) {
-                    #echo "AsyncSocket::readAllData Fiber fread\n";
                     $data = fread($socket, LEN);
-                    #echo "AsyncSocket::readAllData Fiber after\n";
                     if ($data !== false) {
                         if ($data === "") {
                             if ($buffer !== "") {
-                                #echo "AsyncSocket::readAllData Fiber done read\n";
                                 break;
                             }
                         } else {
-                            #echo "AsyncSocket::readAllData Fiber write \$buffer\n";
                             $buffer .= $data;
                         }
                     }
                 }
-                #echo "AsyncSocket::readAllData Fiber suspend\n";
                 \Fiber::suspend();
             } while (true);
 
-            #echo "AsyncSocket::readAllData Fiber return \$buffer\n";
             return $buffer;
         });
     }

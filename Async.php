@@ -7,19 +7,13 @@ class Async
     public static function async(Fiber $fiber): mixed
     {
         self::$tasks[] = [Fiber::getCurrent(), $fiber];
-        #echo "Async::await start\n";
         $fiber->start();
-        #echo "Async::await start after\n";
         while (!$fiber->isTerminated()) {
-            #echo "Async::await resume\n";
             $fiber->resume();
-            #echo "Async::await resume after\n";
 
             if ($fiber->isTerminated()) {
-                #echo "Async::await break\n";
                 break;
             } else {
-                #echo "Async::await suspend\n";
                 Fiber::suspend();
             }
         }
