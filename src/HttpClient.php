@@ -1,11 +1,10 @@
 <?php
 
 require_once __DIR__ . "/Async.php";
+require_once __DIR__ . "/SocketCheckMode.php";
 
 const USEC = 20_000;
 const LEN = 5000;
-const STREAM_CHECK_READ = 1;
-const STREAM_CHECK_WRITE = 2;
 
 class HttpClient
 {
@@ -34,7 +33,7 @@ class HttpClient
     {
         return new \Fiber(function () use ($socket, $data) {
             do {
-                $needCheck = $this->checkStream($socket, STREAM_CHECK_WRITE);
+                $needCheck = $this->checkStream($socket, SocketCheckMode::WRITE);
                 if ($needCheck === 1) {
                     $bytes = fwrite($socket, $data, LEN);
                     if ($bytes !== false) {
@@ -55,7 +54,7 @@ class HttpClient
             $buffer = "";
 
             do {
-                $needCheck = $this->checkStream($socket, STREAM_CHECK_READ);
+                $needCheck = $this->checkStream($socket);
                 if ($needCheck !== 1) {
                     \Fiber::suspend();
                 }
@@ -77,16 +76,16 @@ class HttpClient
         });
     }
 
-    private function checkStream(mixed $stream, int $mode = STREAM_CHECK_READ): int|false
+    private function checkStream(mixed $stream, SocketCheckMode $mode = SocketCheckMode::READ): int|false
     {
         $reads = [];
         $writes = [];
         $excepts = [];
 
-        if ($mode & STREAM_CHECK_READ) {
+        if ($mode->value & SocketCheckMode::READ->value) {
             $reads = [$stream];
         }
-        if ($mode & STREAM_CHECK_WRITE) {
+        if ($mode->value & SocketCheckMode::WRITE->value) {
             $writes = [$stream];
         }
 

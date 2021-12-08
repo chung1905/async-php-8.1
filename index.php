@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/HttpClient.php";
+require_once __DIR__ . "/src/HttpClient.php";
 
 $urls = [
     "http://httpbin.org/delay/8",
