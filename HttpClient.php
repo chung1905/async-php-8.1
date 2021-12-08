@@ -19,9 +19,7 @@ class HttpClient
         $socket = $this->createAsyncSocket($host, $port);
         unset($parts);
 
-        #echo "HttpClient::fetch\n";
         return new \Fiber(function () use ($socket, $host, $path) {
-            #echo "HttpClient::fetch Fiber\n";
             $body = sprintf("GET %s\r\n", $path);
             $body .= sprintf("Host: %s\r\n", $host);
             $body .= "Accept: */*\r\n";
@@ -58,17 +56,19 @@ class HttpClient
 
             do {
                 $needCheck = $this->checkStream($socket, STREAM_CHECK_READ);
-                if ($needCheck === 1) {
-                    $data = fread($socket, LEN);
-                    if ($data !== false) {
-                        if ($data === "") {
-                            if ($buffer !== "") {
-                                break;
-                            }
-                        } else {
-                            $buffer .= $data;
-                        }
+                if ($needCheck !== 1) {
+                    \Fiber::suspend();
+                }
+                $data = fread($socket, LEN);
+                if ($data !== false) {
+                    \Fiber::suspend();
+                }
+                if ($data === "") {
+                    if ($buffer !== "") {
+                        break;
                     }
+                } else {
+                    $buffer .= $data;
                 }
                 \Fiber::suspend();
             } while (true);
